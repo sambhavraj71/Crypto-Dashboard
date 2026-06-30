@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CryptoVault - Premium Crypto Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <div class="bg-animation">
+        <div class="orb orb1"></div>
+        <div class="orb orb2"></div>
+        <div class="orb orb3"></div>
+        <div class="orb orb4"></div>
+    </div>
+    <nav class="navbar glass">
+        <div class="container">
+            <div class="nav-brand">
+                <i class="fas fa-coins"></i>
+                <span>Crypto<span>Vault</span></span>
+            </div>
+            <div class="nav-links">
+                <a href="#" class="active"><i class="fas fa-home"></i> Dashboard</a>
+
+            </div>
+            <div class="nav-actions">
+                <button class="btn-glass" id="refreshBtn">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+                <button class="btn-glass" id="themeToggle">
+                    <i class="fas fa-moon"></i>
+                </button>
+                
+            </div>
+        </div>
+    </nav>
+    <main class="main-content">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card glass">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #f7931a, #f9a825);">
+                        <i class="fab fa-bitcoin"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-label">Bitcoin</span>
+                        <span class="stat-value" id="btcPrice">Loading...</span>
+                        <span class="stat-change positive" id="btcChange">+0.00%</span>
+                    </div>
+                </div>
+                <div class="stat-card glass">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #627eea, #4a6cf7);">
+                        <i class="fab fa-ethereum"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-label">Ethereum</span>
+                        <span class="stat-value" id="ethPrice">Loading...</span>
+                        <span class="stat-change positive" id="ethChange">+0.00%</span>
+                    </div>
+                </div>
+                <div class="stat-card glass">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #26a17b, #1a8a5a);">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-label">Total Market Cap</span>
+                        <span class="stat-value" id="marketCap">Loading...</span>
+                        <span class="stat-change positive" id="marketCapChange">+0.00%</span>
+                    </div>
+                </div>
+                <div class="stat-card glass">
+                    <div class="stat-icon" style="background: linear-gradient(135deg, #6c63ff, #5a52d5);">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-label">24h Volume</span>
+                        <span class="stat-value" id="volume">Loading...</span>
+                        <span class="stat-change positive" id="volumeChange">+0.00%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="dashboard-grid">
+                <div class="chart-section glass">
+                    <div class="chart-header">
+                        <div>
+                            <h3><i class="fas fa-chart-area"></i> Market Overview</h3>
+                            <p>Live price movement of top cryptocurrencies</p>
+                        </div>
+                        <div class="chart-controls">
+                            <button class="time-btn active" data-period="1D">1D</button>
+                            <button class="time-btn" data-period="7D">7D</button>
+                            <button class="time-btn" data-period="30D">1M</button>
+                            <button class="time-btn" data-period="90D">3M</button>
+                            <button class="time-btn" data-period="1Y">1Y</button>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="cryptoChart"></canvas>
+                    </div>
+                </div>
+                <div class="watchlist-section glass">
+                    <div class="watchlist-header">
+                        <h3><i class="fas fa-star"></i> Watchlist</h3>
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="searchInput" placeholder="Search crypto..." />
+                            <button id="clearSearch" class="clear-btn"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>
+                    <div class="watchlist-filters">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="gainers">🚀 Gainers</button>
+                        <button class="filter-btn" data-filter="losers">📉 Losers</button>
+                        <button class="filter-btn" data-filter="watchlist">⭐ Watchlist</button>
+                    </div>
+                    <div class="watchlist-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Name</th>
+                                    <th>Price</th>
+                                    <th>24h %</th>
+                                    <th>Market Cap</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cryptoTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="watchlist-footer">
+                        <span id="resultCount">Loading cryptocurrencies...</span>
+                        <button id="loadMoreBtn" class="btn-glass">Load More</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
