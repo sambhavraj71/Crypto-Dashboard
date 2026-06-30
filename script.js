@@ -74,6 +74,7 @@ let currentPeriod = '30D';
 let isLoading = false;
 let visibleCount = 10;
 let historicalDataCache = {};
+let isChartUpdating = false;
 
 function formatPrice(price) {
     if (price >= 1) return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -108,6 +109,8 @@ const resultCount = document.getElementById('resultCount');
 const refreshBtn = document.getElementById('refreshBtn');
 const themeToggle = document.getElementById('themeToggle');
 const toast = document.getElementById('toast');
+const chartContainer = document.getElementById('chartContainer');
+const chartLegend = document.getElementById('chartLegend');
 
 async function fetchCryptoData() {
     try {
@@ -327,37 +330,35 @@ function renderWatchlist(data) {
 }
 
 async function updateChart(data, days) {
-    const ctx = document.getElementById('cryptoChart').getContext('2d');
-    
-    if (chartInstance) {
-        chartInstance.destroy();
-        chartInstance = null;
-    }
-    
-    if (!data || data.length === 0) {
-        showToast('No data available for chart', 'error');
-        return;
-    }
+    if (isChartUpdating) return;
+    isChartUpdating = true;
     
     try {
+        const ctx = document.getElementById('cryptoChart').getContext('2d');
+        
+        if (chartInstance) {
+            chartInstance.destroy();
+            chartInstance = null;
+        }
+        
+        if (!data || data.length === 0) {
+            showToast('No data available for chart', 'error');
+            isChartUpdating = false;
+            return;
+        }
+        
         const topCoins = data.slice(0, 10);
         const colors = [
-            '#f7931a', 
-            '#627eea', 
-            '#26a17b', 
-            '#f3ba2f', 
-            '#0033ad', 
-            '#9945ff', 
-            '#00aae4', 
-            '#c2a633', 
-            '#e6007a', 
-            '#e84142'  
+            '#f7931a', '#627eea', '#26a17b', '#f3ba2f', '#0033ad', 
+            '#9945ff', '#00aae4', '#c2a633', '#e6007a', '#e84142'
         ];
         
         const chartData = {
             labels: [],
             datasets: []
         };
+        
+        let hasData = false;
         
         for (let i = 0; i < topCoins.length; i++) {
             const coin = topCoins[i];
@@ -394,9 +395,11 @@ async function updateChart(data, days) {
                 borderWidth: 2,
                 spanGaps: true
             });
+            
+            hasData = true;
         }
         
-        if (chartData.datasets.length === 0) {
+        if (!hasData) {
             throw new Error('No historical data available for any coin');
         }
 
@@ -415,13 +418,13 @@ async function updateChart(data, days) {
                         display: true,
                         position: 'top',
                         labels: {
-                            color: 'var(--text-secondary)',
+                            color: '#94a3b8',
                             font: {
-                                size: 10,
+                                size: 11,
                                 weight: '500'
                             },
                             boxWidth: 12,
-                            padding: 8,
+                            padding: 10,
                             usePointStyle: true,
                             pointStyle: 'circle'
                         }
@@ -444,7 +447,7 @@ async function updateChart(data, days) {
                             color: 'rgba(255,255,255,0.05)'
                         },
                         ticks: {
-                            color: 'var(--text-muted)',
+                            color: '#94a3b8',
                             callback: function(value) {
                                 return '$' + value.toLocaleString();
                             }
@@ -455,7 +458,7 @@ async function updateChart(data, days) {
                             display: false
                         },
                         ticks: {
-                            color: 'var(--text-muted)',
+                            color: '#94a3b8',
                             maxTicksLimit: days <= 1 ? 12 : 20,
                             maxRotation: 45,
                             autoSkip: true
@@ -465,12 +468,14 @@ async function updateChart(data, days) {
             }
         });
         
-        console.log(`📈 Chart updated with ${topCoins.length} cryptocurrencies for ${days} days`);
+        console.log(`📈 Chart updated with ${chartData.datasets.length} cryptocurrencies for ${days} days`);
         
     } catch (error) {
         console.error('Error updating chart:', error);
-        showToast('Error loading chart data. Using fallback.', 'error');
+        showToast('Error loading chart data.', 'error');
         initFallbackChart(data);
+    } finally {
+        isChartUpdating = false;
     }
 }
 
@@ -522,7 +527,7 @@ function initFallbackChart(data) {
                         color: 'rgba(255,255,255,0.05)'
                     },
                     ticks: {
-                        color: 'var(--text-muted)',
+                        color: '#94a3b8',
                         callback: function(value) {
                             return '$' + value.toLocaleString();
                         }
@@ -533,7 +538,7 @@ function initFallbackChart(data) {
                         display: false
                     },
                     ticks: {
-                        color: 'var(--text-muted)'
+                        color: '#94a3b8'
                     }
                 }
             }
@@ -580,26 +585,25 @@ document.querySelectorAll('.filter-btn').forEach(btn => {
 });
 
 document.querySelectorAll('.time-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
+    btn.addEventListener('click', async function() {
         document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        this.classList.add('active');
         
-        const days = btn.dataset.period;
-        currentPeriod = days;
+        const daysMap = {
+            '1D': 1,
+            '7D': 7,
+            '30D': 30,
+            '90D': 90,
+            '1Y': 365
+        };
         
-        let daysToFetch = 30;
-        switch(days) {
-            case '1D': daysToFetch = 1; break;
-            case '7D': daysToFetch = 7; break;
-            case '30D': daysToFetch = 30; break;
-            case '90D': daysToFetch = 90; break;
-            case '1Y': daysToFetch = 365; break;
-            default: daysToFetch = 30;
-        }
+        const period = this.dataset.period;
+        currentPeriod = period;
+        const daysToFetch = daysMap[period] || 30;
         
-        showToast(`Loading ${days} chart data...`, 'info');
+        showToast(`Loading ${period} chart...`, 'info');
         await updateChart(allCryptos, daysToFetch);
-        showToast(`📈 ${days} chart updated with all coins!`, 'success');
+        showToast(`📈 ${period} chart updated!`, 'success');
     });
 });
 
@@ -674,15 +678,14 @@ async function loadData() {
         renderStats(cryptoData);
         renderWatchlist(cryptoData);
         
-        let daysToFetch = 30;
-        switch(currentPeriod) {
-            case '1D': daysToFetch = 1; break;
-            case '7D': daysToFetch = 7; break;
-            case '30D': daysToFetch = 30; break;
-            case '90D': daysToFetch = 90; break;
-            case '1Y': daysToFetch = 365; break;
-            default: daysToFetch = 30;
-        }
+        const daysMap = {
+            '1D': 1,
+            '7D': 7,
+            '30D': 30,
+            '90D': 90,
+            '1Y': 365
+        };
+        const daysToFetch = daysMap[currentPeriod] || 30;
         
         await updateChart(cryptoData, daysToFetch);
         
